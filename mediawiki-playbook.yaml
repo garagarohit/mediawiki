@@ -9,11 +9,11 @@
         name: dnf
         state: present
       
-    - name: restting php using dnf
-      shell: dnf module reset php
+    # - name: restting php using dnf
+    #   shell: dnf module reset php
       
-    - name: php enable using dnf
-      shell: dnf module enable php:7.4
+    # - name: php enable using dnf
+    #   shell: dnf module enable php:7.4
       
     - name: install required packages using dnf
       shell: dnf install httpd php php-mysqlnd php-gd php-xml mariadb-server mariadb php-mbstring php-json mod_ssl php-intl php-apcu
