@@ -24,9 +24,9 @@ resource "aws_instance" "Mediawiki" {
   provisioner "remote-exec" {
     inline = [
       "sudo dnf module reset php",
-      "sudo dnf install httpd php php-mysqlnd php-gd php-xml mariadb-server mariadb php-mbstring php-json mod_ssl php-intl php-apcu",
-      "sudo yum wget",
-      "sudo yum install firewalld",
+      "sudo dnf install -y httpd php php-mysqlnd php-gd php-xml mariadb-server mariadb php-mbstring php-json mod_ssl php-intl php-apcu",
+      "sudo yum install -y wget",
+      "sudo yum install -y firewalld",
       "sudo systemctl enable firewalld",
       "sudo restart",
       "sudo systemctl enable mariadb",
