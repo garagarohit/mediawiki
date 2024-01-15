@@ -5,12 +5,14 @@
   become : yes
   tasks:
     - name: Update package cache and install required packages
-      shell: |
-      dnf module reset php
-      dnf module enable php:7.4
-      dnf install httpd php php-mysqlnd php-gd php-xml mariadb-server mariadb php-mbstring php-json mod_ssl php-intl php-apcu
-
-
+      shell: dnf module reset php
+      
+    - name: Update package cache and install required packages
+      shell: dnf module enable php:7.4
+      
+    - name: Update package cache and install required packages
+      shell: dnf install httpd php php-mysqlnd php-gd php-xml mariadb-server mariadb php-mbstring php-json mod_ssl php-intl php-apcu
+      
     - name: Start and enable Apache (httpd) service
       service:
         name: httpd
