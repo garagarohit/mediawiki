@@ -25,7 +25,7 @@ resource "aws_instance" "Mediawiki" {
     command = "chmod 600 sai_devops.pem"
   }
   provisioner "local-exec" {
-        command = "ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -u --private-key ./sai_devops.pem -i '${aws_instance.Mediawiki.public_ip},' mediawiki-playbook.yaml"
+        command = "ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -u root -i '${aws_instance.Mediawiki.public_ip},' --private-key ./sai_devops.pem -i  mediawiki-playbook.yaml"
      }
 }
 
