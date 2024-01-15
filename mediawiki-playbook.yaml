@@ -8,8 +8,23 @@
       apt:
         name: dnf
         state: present
-    - name: install required packages using dnf
-      shell: dnf install httpd php php-mysqlnd php-gd php-xml mariadb-server mariadb php-mbstring php-json mod_ssl php-intl php-apcu
+    - name: install required packages
+      apt:
+        name: "{{item}}"
+        state: present
+      loop:
+      - httpd
+      - php
+      - php-mysqlnd
+      - php-gd
+      - php-xml
+      - mariadb-server
+      - mariadb
+      - php-mbstring
+      - php-json
+      - mod_ssl
+      - php-intl
+      - php-apcu
       
     - name: Start and enable Apache (httpd) service
       service:
