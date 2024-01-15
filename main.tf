@@ -25,7 +25,7 @@ resource "aws_instance" "Mediawiki" {
   }
 #Running ansible from 
   provisioner "local-exec" {
-        command = "ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -u centos --private-key ./sai_devops.pem -i '${aws_instance.myec2instances.public_ip},' mediawiki-playbook.yaml"
+        command = "ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -u centos --private-key ./sai_devops.pem -i '${aws_instance.Mediawiki.public_ip},' mediawiki-playbook.yaml"
      }
 }
 
