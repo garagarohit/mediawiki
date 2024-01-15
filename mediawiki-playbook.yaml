@@ -4,7 +4,7 @@
   connection: local
   become : yes
   tasks :
-      - name : Resetting php
+    - name : Resetting php
       dnf :
         name : php
         state : reset
