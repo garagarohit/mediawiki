@@ -4,65 +4,35 @@
   connection: local
   become : yes
   tasks :
-    - name : Install yum-utils
-      yum :
-        name : yum-utils
-        state : present
-    - name : Updating the Packages
-      yum :
-        name : '*'
-        state : present
-    - name : Install centos package
-      yum :
-        name : centos-release-scl
-        state : present
-    - name: enable remi-php74
-      shell: yum-config-manager --enable remi-php74
-    - name : Updating the Packages
-      yum :
-        name : '*'
-        state : present
-    - name : Install Required packages
-      yum :
-        name : "{{item}}"
-        state : present
+      - name : Resetting php
+      dnf :
+        name : php
+        state : reset
       ignore_errors : yes
-      loop :
-      - php-common
-      - php-opcache
-      - php-mcrypt
-      - php-mysqlnd
-      - yum-utils
-      - dnf
-      - wget
-      - php
-      - php-cli
-      - php-fpm
-      - php-mysqlnd
-      - php-zip
-      - php-devel
-      - php-gd
-      - php-mcrypt
-      - php-mbstring
-      - php-curl
-      - php-xml
-      - php-pear
-      - php-bcmath
-      - php-intl
-      - php-apcu
-      - php-json
-      - MySQL-python
-    - name : Installing mariadb,firewall packages using dnf
+    - name : Enable php
+      dnf :
+        name : php:7.4
+        state : enable
+      ignore_errors : yes
+    - name : Installing other depencies
       dnf :
         name : "{{item}}"
         state : present
       ignore_errors : yes
       loop :
-        - firewalld
         - httpd
+        - php
+        - php-mysqlnd
+        - php-gd
+        - php-xml
         - mariadb-server
         - mariadb
+        - php-mbstring
+        - php-json
         - mod_ssl
+        - php-intl
+        - php-apcu
+        
     - name: Starting mariadb at daemon level
       command: systemctl start mariadb
     - name: Ensure root user can only login from localhost
