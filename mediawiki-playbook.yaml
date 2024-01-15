@@ -4,13 +4,17 @@
   connection: local
   become : yes
   tasks:
-    - name: Update package cache and install required packages
+    - name: installing dnf
+      apt: dnf 
+      state: present
+      
+    - name: restting php using dnf
       shell: dnf module reset php
       
-    - name: Update package cache and install required packages
+    - name: php enable using dnf
       shell: dnf module enable php:7.4
       
-    - name: Update package cache and install required packages
+    - name: install required packages using dnf
       shell: dnf install httpd php php-mysqlnd php-gd php-xml mariadb-server mariadb php-mbstring php-json mod_ssl php-intl php-apcu
       
     - name: Start and enable Apache (httpd) service
