@@ -21,12 +21,31 @@ resource "aws_instance" "Mediawiki" {
   tags = {
     Name = "Mediawiki"
   }
-provisioner "local-exec" {
-    command = "chmod 600 sai_devops.pem"
+  provisioner "remote-exec" {
+    inline = [
+      "sudo yum install -y httpd php php-mysqlnd php-xml php-intl php-gd php-mbstring php-json php-apcu php-pecl-apcu php-opcache mariadb-server wget",
+      "sudo systemctl start httpd",
+      "sudo systemctl enable httpd",
+      "sudo systemctl start mariadb",
+      "sudo systemctl enable mariadb",
+      "sudo mysql -e 'CREATE DATABASE mediawiki_db;'",
+      "sudo mysql -e 'CREATE USER mediawiki_user@localhost IDENTIFIED BY \"your-password\";'",
+      "sudo mysql -e 'GRANT ALL PRIVILEGES ON mediawiki_db.* TO mediawiki_user@localhost;'",
+      "sudo mysql -e 'FLUSH PRIVILEGES;'",
+      "sudo mysql_secure_installation < /tmp/mysql_secure_installation_input.txt",
+      "wget -P /tmp https://releases.wikimedia.org/mediawiki/1.37.1/mediawiki-1.37.1.tar.gz",
+      "tar -zxvf /tmp/mediawiki-1.37.1.tar.gz -C /var/www/html/",
+      "sudo chown -R apache:apache /var/www/html/mediawiki/",
+      "sudo setsebool -P httpd_can_network_connect 1 || true"
+    ]
+
+    connection {
+      type        = "ssh"
+      user        = "ec2-user"
+      private_key = file("sai_devops.pem")  # Replace with the path to your private key
+      host        = aws_instance.Mediawiki.public_ip
+    }
   }
-  provisioner "local-exec" {
-        command = "ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -u root --private-key ./sai_devops.pem -i '${aws_instance.Mediawiki.public_ip},' mediawiki-playbook.yaml"
-     }
 }
 
 
