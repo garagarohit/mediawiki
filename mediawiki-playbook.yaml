@@ -1,0 +1,196 @@
+---
+- hosts : all
+  remote_user : centos
+  become : yes
+  vars_files: mysql.yaml
+  tasks :
+    - name : Install yum-utils
+      yum :
+        name : yum-utils
+        state : present
+    - name : Updating the Packages
+      yum :
+        name : '*'
+        state : present
+    - name : Install centos package
+      yum :
+        name : centos-release-scl
+        state : present
+    - name: enable remi-php74
+      shell: yum-config-manager --enable remi-php74
+    - name : Updating the Packages
+      yum :
+        name : '*'
+        state : present
+    - name : Install Required packages
+      yum :
+        name : "{{item}}"
+        state : present
+      ignore_errors : yes
+      loop :
+      - php-common
+      - php-opcache
+      - php-mcrypt
+      - php-mysqlnd
+      - yum-utils
+      - dnf
+      - wget
+      - php
+      - php-cli
+      - php-fpm
+      - php-mysqlnd
+      - php-zip
+      - php-devel
+      - php-gd
+      - php-mcrypt
+      - php-mbstring
+      - php-curl
+      - php-xml
+      - php-pear
+      - php-bcmath
+      - php-intl
+      - php-apcu
+      - php-json
+      - MySQL-python
+    - name : Installing mariadb,firewall packages using dnf
+      dnf :
+        name : "{{item}}"
+        state : present
+      ignore_errors : yes
+      loop :
+        - firewalld
+        - httpd
+        - mariadb-server
+        - mariadb
+        - mod_ssl
+    - name: Starting mariadb at daemon level
+      command: systemctl start mariadb
+    - name: Ensure root user can only login from localhost
+      mysql_user:
+        login_password: "{{ mysql_root_password }}"
+        check_implicit_admin: yes
+        name: root
+        host: "{{ item }}"
+        password: "{{ mysql_root_password }}"
+        state: present
+      with_items:
+        - localhost
+        - 127.0.0.1
+        - ::1
+    - name: Add .my.cnf to user home
+      template:
+        src: my.cnf.j2
+        dest: /root/.my.cnf
+    - name: Reload privilege tables
+      command: |
+        mysql -p{{ mysql_root_password }} -ne "{{ item }}"
+      with_items:
+        - FLUSH PRIVILEGES
+      changed_when: False
+    - name: Remove anonymous users
+      command: |
+        mysql -p{{ mysql_root_password }} -ne "{{ item }}"
+      with_items:
+        - DELETE FROM mysql.user WHERE User=''
+      changed_when: False
+    - name: Disallow root login remotely
+      command: |
+        mysql -p{{ mysql_root_password }} -ne "{{ item }}"
+      with_items:
+        - DELETE FROM mysql.user WHERE User='root' AND Host NOT IN ('localhost', '127.0.0.1', '::1')
+      changed_when: False
+    - name: Remove test database and access to it
+      command: |
+        mysql -p{{ mysql_root_password }} -ne "{{ item }}"
+      with_items:
+        - DROP DATABASE IF EXISTS test
+        - DELETE FROM mysql.db WHERE Db='test' OR Db='test\\_%'
+      changed_when: False
+    - name: Reload privilege tables
+      command: |
+        mysql -p{{ mysql_root_password }} -ne "{{ item }}"
+      with_items:
+        - FLUSH PRIVILEGES
+      changed_when: False
+    - name: Delete .my.conf
+      file:
+        path: /root/.my.cnf
+        state: absent
+    - name: create a new database
+      mysql_db: name=wikidatabase state=present login_user=root login_password="{{ mysql_root_password }}"
+    - name: Creating a user and providing permission to database
+      mysql_user:
+        login_user: root
+        login_password: "{{ mysql_root_password }}"
+        name : rajesh
+        priv: '*.*:ALL'
+        state: present
+    - name: Reload privilege tables
+      command: |
+        mysql -p{{ mysql_root_password }} -ne "{{ item }}"
+      with_items:
+        - FLUSH PRIVILEGES
+      changed_when: False
+    - name: Enabling mariadb on daemon level
+      command: systemctl enable mariadb
+    - name: Enabling httpd on daemon level
+      command: systemctl enable httpd
+    - name : Downloading the MediWiki Source code
+      get_url :
+        url : https://releases.wikimedia.org/mediawiki/1.38/mediawiki-1.38.2.tar.gz
+        dest : /home/centos
+        mode : '777'
+    - name: Import a key from a url
+      get_url:
+        url: https://releases.wikimedia.org/mediawiki/1.38/mediawiki-1.38.2.tar.gz.sig
+        dest : /home/centos
+        mode: '777'
+    - name : Untar the downloaded mediawiki tar file
+      unarchive :
+        src : /home/centos/mediawiki-1.38.2.tar.gz
+        dest : /var/www
+        remote_src : yes
+    - name: Creating symbolic link for mediawiki-1.38.2
+      file:
+        src: /var/www/mediawiki-1.38.2/
+        dest: /var/www/mediawiki
+        state: link
+    - name : Changing Apache to look at /var/www
+      lineinfile :
+        path : /etc/httpd/conf/httpd.conf
+        regexp : DocumentRoot "/var/www/html"
+        line : DocumentRoot "/var/www"
+    - name : Changing Apache to look at <Directory "/var/www/html">
+      lineinfile :
+        path : /etc/httpd/conf/httpd.conf
+        regexp : <Directory "/var/www/html">
+        line : <Directory "/var/www">
+    - name : Changing Apache to look at DirectoryIndex index.html index.html.var index.php
+      lineinfile :
+        path : /etc/httpd/conf/httpd.conf
+        regexp :     DirectoryIndex index.html
+        line : DirectoryIndex index.html index.html.var index.php
+    - name : Changing ownership
+      command : chown -R apache:apache /var/www/mediawiki-1.38.2
+    - name : Starting httpd
+      service :
+        name : httpd
+        state : restarted
+    - name : start firewall
+      command : systemctl start firewalld
+    - name: permit traffic for https service
+      firewalld:
+        service: https
+        permanent: yes
+        state: enabled
+    - name: permit traffic for http service
+      firewalld:
+        service: http
+        permanent: yes
+        state: enabled
+    - name : Restarting firewall
+      command : systemctl restart firewalld
+    - name : Enabling https
+      command : restorecon -FR /var/www/mediawiki-1.38.2/
+    - name : Enabling https
+      command : restorecon -FR /var/www/mediawiki
