@@ -5,8 +5,9 @@
   become : yes
   tasks:
     - name: installing dnf
-      apt: dnf 
-      state: present
+      apt:
+        name: dnf
+        state: present
       
     - name: restting php using dnf
       shell: dnf module reset php
