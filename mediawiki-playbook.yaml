@@ -31,7 +31,7 @@
     - name: enable remi-php74
       shell: yum-config-manager --enable remi-php74
     - name : Updating the Packages
-      yum4 :
+      yum :
         name : '*'
         state : present
         when: ansible_pkg_mgr == "yum"
