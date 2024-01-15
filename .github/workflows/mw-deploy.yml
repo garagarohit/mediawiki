@@ -38,8 +38,8 @@ jobs:
         run: terraform plan -no-color -input=false 
         continue-on-error: true
 
-      # - name: Terraform Apply
-      #   run: terraform apply -auto-approve -input=false 
+      - name: Terraform Apply
+        run: terraform apply -auto-approve -input=false 
 
       # - name: Terraform destroy
       #   run: terraform destroy -auto-approve -input=false 
