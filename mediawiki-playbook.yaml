@@ -5,23 +5,11 @@
   become : yes
   tasks:
     - name: Update package cache and install required packages
-      apt:
-        name: "{{ item }}"
-        state: present
-      with_items:
-        - httpd
-        - php
-        - php-mysqlnd
-        - php-xml
-        - php-intl
-        - php-gd
-        - php-mbstring
-        - php-json
-        - php-apcu
-        - php-pecl-apcu
-        - php-opcache
-        - mariadb-server
-        - wget
+      shell: |
+      dnf module reset php
+      dnf module enable php:7.4
+      dnf install httpd php php-mysqlnd php-gd php-xml mariadb-server mariadb php-mbstring php-json mod_ssl php-intl php-apcu
+
 
     - name: Start and enable Apache (httpd) service
       service:
