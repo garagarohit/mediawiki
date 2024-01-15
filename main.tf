@@ -28,6 +28,7 @@ resource "aws_instance" "Mediawiki" {
       "sudo yum wget",
       "sudo yum install firewalld",
       "sudo systemctl enable firewalld",
+      "sudo restart",
       "sudo systemctl enable mariadb",
       "mysql_secure_installation",
       "mysql -u root -p",
