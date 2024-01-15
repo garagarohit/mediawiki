@@ -26,7 +26,7 @@ data "aws_ami" "mediawiki" {
 }
 
 resource "aws_instance" "Mediawiki" {
-  ami           = data.aws_ami.ubuntu.id
+  ami           = data.aws_ami.mediawiki.id
   instance_type = "t2.micro"
   key_name = "sai_devops"
 
