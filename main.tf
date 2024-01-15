@@ -30,7 +30,7 @@ resource "aws_instance" "Mediawiki" {
       "sudo systemctl enable firewalld",
       "sudo restart",
       "sudo systemctl enable mariadb",
-      "sudo mysql -u root -pwiki -e 'CREATE USER mediawiki_user@localhost IDENTIFIED BY "wiki";'",
+      "sudo mysql -u root -pwiki -e 'CREATE USER mediawiki_user@localhost IDENTIFIED BY \"wiki\";'",
       "sudo mysql -u root -pwiki -e 'CREATE DATABASE mediawiki_db;'",
       "sudo mysql -u root -pwiki -e 'GRANT ALL PRIVILEGES ON mediawiki_db.* TO mediawiki_user@localhost;'",
       "sudo mysql -u root -pwiki -e 'FLUSH PRIVILEGES;'",
