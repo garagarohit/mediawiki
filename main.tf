@@ -12,21 +12,8 @@ provider "aws" {
   region = "ap-south-1"
 }
 
-data "aws_ami" "mediawiki" {
-  most_recent = true
-  owners      = ["amazon"]
-  filter {
-    name   = "architecture"
-    values = ["arm64"]
-  }
-  filter {
-    name   = "ami"
-    values = ["al2023-ami-2024*"]
-  }
-}
-
 resource "aws_instance" "Mediawiki" {
-  ami           = data.aws_ami.mediawiki.id
+  ami           = "ami-04708942c263d8190"
   instance_type = "t2.micro"
   key_name = "sai_devops"
 
