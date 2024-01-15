@@ -23,20 +23,27 @@ resource "aws_instance" "Mediawiki" {
   }
   provisioner "remote-exec" {
     inline = [
-      "sudo yum install -y httpd php php-mysqlnd php-xml php-intl php-gd php-mbstring php-json php-apcu php-pecl-apcu php-opcache mariadb-server wget",
-      "sudo systemctl start httpd",
-      "sudo systemctl enable httpd",
+      "yum install centos-release-scl",
+      "sudo yum install -y httpd24-httpd rh-php73 rh-php73-php rh-php73-php-mbstring rh-php73-php-mysqlnd rh-php73-php-gd rh-php73-php-xml mariadb-server mariadb wget",
       "sudo systemctl start mariadb",
       "sudo systemctl enable mariadb",
+      "mysql_secure_installation",
+      "mysql -u root -p",
       "sudo mysql -e 'CREATE DATABASE mediawiki_db;'",
       "sudo mysql -e 'CREATE USER mediawiki_user@localhost IDENTIFIED BY \"your-password\";'",
       "sudo mysql -e 'GRANT ALL PRIVILEGES ON mediawiki_db.* TO mediawiki_user@localhost;'",
       "sudo mysql -e 'FLUSH PRIVILEGES;'",
-      "sudo mysql_secure_installation < /tmp/mysql_secure_installation_input.txt",
-      "wget -P /tmp https://releases.wikimedia.org/mediawiki/1.37.1/mediawiki-1.37.1.tar.gz",
-      "tar -zxvf /tmp/mediawiki-1.37.1.tar.gz -C /var/www/html/",
+      "wget https://releases.wikimedia.org/mediawiki/1.41/mediawiki-1.41.0.tar.gz.sig",
+      "cd /var/www",
+      "tar -zxvf mediawiki-1.41.0.tar.gz",
+      "ln -s mediawiki-1.41.0/ mediawiki",
       "sudo chown -R apache:apache /var/www/html/mediawiki/",
-      "sudo setsebool -P httpd_can_network_connect 1 || true"
+      "firewall-cmd --permanent --zone=public --add-service=http",
+      "firewall-cmd --permanent --zone=public --add-service=https",
+      "systemctl restart firewalld",
+      "getenforce",
+      "restorecon -FR /var/www/mediawiki-1.41.0/",
+      "restorecon -FR /var/www/mediawiki"
     ]
 
     connection {
@@ -46,6 +53,9 @@ resource "aws_instance" "Mediawiki" {
       host        = aws_instance.Mediawiki.public_ip
     }
   }
+}
+output "mediawiki_instance_ip" {
+  value = aws_instance.Mediawiki.public_ip
 }
 
 
