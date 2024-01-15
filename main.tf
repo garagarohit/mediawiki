@@ -24,7 +24,7 @@ resource "aws_instance" "Mediawiki" {
   provisioner "local-exec" {
     command = "chmod 600 sai_devops.pem"
   }
-  provisioner "remote-exec" {
+  provisioner "local-exec" {
     inline = [
       "sudo yum install -y python3",  # Install Python3 (required by Ansible)
     ]
