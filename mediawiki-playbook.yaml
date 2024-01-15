@@ -5,29 +5,29 @@
   become : yes
   tasks:
     - name: Install EPEL repo
-      yum:
+      yum4:
         name: https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
         state: present
     - name: Install Remi repo
-      yum:
+      yum4:
         name: https://rpms.remirepo.net/enterprise/remi-release-7.rpm
         state: present
     - name : Install yum-utils
-      yum :
+      yum4:
         name : yum-utils
         state : present
     - name : Updating the Packages
-      yum :
+      yum4 :
         name : '*'
         state : present
     - name : Install centos package
-      yum :
+      yum4 :
         name : centos-release-scl
         state : present
     - name: enable remi-php74
       shell: yum-config-manager --enable remi-php74
     - name : Updating the Packages
-      yum :
+      yum4 :
         name : '*'
         state : present
     # - name: installing dnf
