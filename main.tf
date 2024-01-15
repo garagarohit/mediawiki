@@ -21,6 +21,7 @@ resource "aws_instance" "Mediawiki" {
   tags = {
     Name = "Mediawiki"
   }
+}
 
 
 
