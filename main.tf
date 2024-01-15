@@ -55,7 +55,7 @@ resource "aws_instance" "Mediawiki" {
       "sudo systemctl restart firewalld",
       "getenforce",
       "sudo restorecon -FR /var/www/mediawiki-1.41.0/",
-      "sudo restorecon -FR /var/www/mediawiki"
+      "sudo restorecon -FR /var/www/mediawiki",
       "ls -lZ /var/www/"
     ]
 
