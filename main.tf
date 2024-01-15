@@ -67,10 +67,17 @@ resource "aws_instance" "Mediawiki" {
   provisioner "local-exec" {
     command = "chmod 600 sai_devops.pem"
   }
-#Running ansible from 
+  provisioner "remote-exec" {
+    inline = [
+      "sudo yum install -y python3",  # Install Python3 (required by Ansible)
+    ]
+  }
   provisioner "local-exec" {
-        command = "ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -u centos --private-key ./sai_devops.pem -i '${aws_instance.Mediawiki.public_ip},' mediawiki-playbook.yaml"
-     }
+    command = <<-EOT
+      ansible-playbook -i '${aws_instance.Mediawiki.public_ip},' -u ec2-user -e 'ansible_python_interpreter=/usr/bin/python3' mediawiki-playbook.yaml
+    EOT
+  }
 }
+
 
 
