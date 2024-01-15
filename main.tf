@@ -23,27 +23,39 @@ resource "aws_instance" "Mediawiki" {
   }
   provisioner "remote-exec" {
     inline = [
-      "yum install centos-release-scl",
-      "sudo yum install -y httpd24-httpd rh-php73 rh-php73-php rh-php73-php-mbstring rh-php73-php-mysqlnd rh-php73-php-gd rh-php73-php-xml mariadb-server mariadb wget",
-      "sudo systemctl start mariadb",
+      "sudo dnf module reset php",
+      "sudo dnf install httpd php php-mysqlnd php-gd php-xml mariadb-server mariadb php-mbstring php-json mod_ssl php-intl php-apcu",
+      "sudo yum wget",
+      "sudo yum install firewalld",
+      "sudo systemctl enable firewalld",
       "sudo systemctl enable mariadb",
       "mysql_secure_installation",
       "mysql -u root -p",
       "sudo mysql -e 'CREATE DATABASE mediawiki_db;'",
-      "sudo mysql -e 'CREATE USER mediawiki_user@localhost IDENTIFIED BY \"your-password\";'",
-      "sudo mysql -e 'GRANT ALL PRIVILEGES ON mediawiki_db.* TO mediawiki_user@localhost;'",
+      "sudo mysql -e 'CREATE USER 'wiki'@'localhost' IDENTIFIED BY 'THISpasswordSHOULDbeCHANGED';'",
+      "sudo mysql -e 'GRANT ALL PRIVILEGES ON mediawiki_db.* TO 'wiki'@'localhost';'",
       "sudo mysql -e 'FLUSH PRIVILEGES;'",
-      "wget https://releases.wikimedia.org/mediawiki/1.41/mediawiki-1.41.0.tar.gz.sig",
+      "sudo mysql -e 'SHOW DATABASES;'",
+      "sudo mysql -e 'SHOW GRANTS FOR 'wiki'@'localhost';'",
+      "sudo mysql -e 'exit'",
+      "sudo systemctl enable mariadb",
+      "sudo systemctl enable httpd",
+      " cd home/ec2-user",
+      "sudo wget https://releases.wikimedia.org/mediawiki/1.41/mediawiki-1.41.0.tar.gz",
+      "sudo wget https://releases.wikimedia.org/mediawiki/1.41/mediawiki-1.41.0.tar.gz.sig",
+      "gpg --verify mediawiki-1.41.0.tar.gz.sig mediawiki-1.41.0.tar.gz",
       "cd /var/www",
-      "tar -zxvf mediawiki-1.41.0.tar.gz",
+      "sudo tar -zxvf mediawiki-1.41.0.tar.gz",
       "ln -s mediawiki-1.41.0/ mediawiki",
-      "sudo chown -R apache:apache /var/www/html/mediawiki/",
-      "firewall-cmd --permanent --zone=public --add-service=http",
-      "firewall-cmd --permanent --zone=public --add-service=https",
-      "systemctl restart firewalld",
+      "chown -R apache:apache /var/www/html/mediawiki/",
+      "sudo service httpd restart",
+      "sudo firewall-cmd --permanent --zone=public --add-service=http",
+      "sudo firewall-cmd --permanent --zone=public --add-service=https",
+      "sudo systemctl restart firewalld",
       "getenforce",
-      "restorecon -FR /var/www/mediawiki-1.41.0/",
-      "restorecon -FR /var/www/mediawiki"
+      "sudo restorecon -FR /var/www/mediawiki-1.41.0/",
+      "sudo restorecon -FR /var/www/mediawiki"
+      "ls -lZ /var/www/"
     ]
 
     connection {
