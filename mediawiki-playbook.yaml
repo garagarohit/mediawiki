@@ -3,164 +3,75 @@
   remote_user : root
   connection: local
   become : yes
-  tasks :
-    - name : Resetting php
-      dnf :
-        name : php
-        state : reset
-      ignore_errors : yes
-    - name : Enable php
-      dnf :
-        name : php:7.4
-        state : enable
-      ignore_errors : yes
-    - name : Installing other depencies
-      dnf :
-        name : "{{item}}"
-        state : present
-      ignore_errors : yes
-      loop :
+  tasks:
+    - name: Update package cache and install required packages
+      package:
+        name: "{{ item }}"
+        state: present
+      with_items:
         - httpd
         - php
         - php-mysqlnd
-        - php-gd
         - php-xml
-        - mariadb-server
-        - mariadb
+        - php-intl
+        - php-gd
         - php-mbstring
         - php-json
-        - mod_ssl
-        - php-intl
         - php-apcu
-        
-    - name: Starting mariadb at daemon level
-      command: systemctl start mariadb
-    - name: Ensure root user can only login from localhost
-      mysql_user:
-        login_password: "${{ secrets.mysql_root_password }}"
-        check_implicit_admin: yes
-        name: root
-        host: "{{ item }}"
-        password: "${{ secrets.mysql_root_password }}"
-        state: present
-      with_items:
-        - localhost
-        - 127.0.0.1
-        - ::1
-    - name: Add .my.cnf to user home
-      template:
-        src: my.cnf.j2
-        dest: /root/.my.cnf
-    - name: Reload privilege tables
-      command: |
-        mysql -p${{ secrets.mysql_root_password }} -ne "{{ item }}"
-      with_items:
-        - FLUSH PRIVILEGES
-      changed_when: False
-    - name: Remove anonymous users
-      command: |
-        mysql -p${{ secrets.mysql_root_password }} -ne "{{ item }}"
-      with_items:
-        - DELETE FROM mysql.user WHERE User=''
-      changed_when: False
-    - name: Disallow root login remotely
-      command: |
-        mysql -p${{ secrets.mysql_root_password }} -ne "{{ item }}"
-      with_items:
-        - DELETE FROM mysql.user WHERE User='root' AND Host NOT IN ('localhost', '127.0.0.1', '::1')
-      changed_when: False
-    - name: Remove test database and access to it
-      command: |
-        mysql -p${{ secrets.mysql_root_password }} -ne "{{ item }}"
-      with_items:
-        - DROP DATABASE IF EXISTS test
-        - DELETE FROM mysql.db WHERE Db='test' OR Db='test\\_%'
-      changed_when: False
-    - name: Reload privilege tables
-      command: |
-        mysql -p${{ secrets.mysql_root_password }} -ne "{{ item }}"
-      with_items:
-        - FLUSH PRIVILEGES
-      changed_when: False
-    - name: Delete .my.conf
-      file:
-        path: /root/.my.cnf
-        state: absent
-    - name: create a new database
-      mysql_db: name=wikidatabase state=present login_user=root login_password="{{ mysql_root_password }}"
-    - name: Creating a user and providing permission to database
-      mysql_user:
-        login_user: root
-        login_password: "${{ secrets.mysql_root_password }}"
-        name : rajesh
-        priv: '*.*:ALL'
-        state: present
-    - name: Reload privilege tables
-      command: |
-        mysql -p${{ secrets.mysql_root_password }} -ne "{{ item }}"
-      with_items:
-        - FLUSH PRIVILEGES
-      changed_when: False
-    - name: Enabling mariadb on daemon level
-      command: systemctl enable mariadb
-    - name: Enabling httpd on daemon level
-      command: systemctl enable httpd
-    - name : Downloading the MediWiki Source code
-      get_url :
-        url : https://releases.wikimedia.org/mediawiki/1.38/mediawiki-1.38.2.tar.gz
-        dest : /home/centos
-        mode : '777'
-    - name: Import a key from a url
+        - php-pecl-apcu
+        - php-opcache
+        - mariadb-server
+        - wget
+
+    - name: Start and enable Apache (httpd) service
+      service:
+        name: httpd
+        state: started
+        enabled: yes
+
+    - name: Start and enable MariaDB (MySQL) service
+      service:
+        name: mariadb
+        state: started
+        enabled: yes
+
+    - name: Secure the MariaDB installation
+      command: mysql_secure_installation < /root/mysql_secure_installation_input.txt
+      args:
+        creates: /root/mysql_secure_installation_input.txt
+
+    - name: Download MediaWiki
       get_url:
-        url: https://releases.wikimedia.org/mediawiki/1.38/mediawiki-1.38.2.tar.gz.sig
-        dest : /home/centos
-        mode: '777'
-    - name : Untar the downloaded mediawiki tar file
-      unarchive :
-        src : /home/centos/mediawiki-1.38.2.tar.gz
-        dest : /var/www
-        remote_src : yes
-    - name: Creating symbolic link for mediawiki-1.38.2
+        url: "https://releases.wikimedia.org/mediawiki/{{ mediawiki_version }}/mediawiki-{{ mediawiki_version }}.tar.gz"
+        dest: /tmp/mediawiki.tar.gz
+        mode: 0644
+      vars:
+        mediawiki_version: "1.37.1"  # Replace with the desired MediaWiki version
+
+    - name: Extract MediaWiki archive
+      unarchive:
+        src: /tmp/mediawiki.tar.gz
+        dest: /var/www/html/
+        remote_src: yes
+        owner: apache
+        group: apache
+        mode: 0755
+
+    - name: Create MediaWiki configuration directory
       file:
-        src: /var/www/mediawiki-1.38.2/
-        dest: /var/www/mediawiki
-        state: link
-    - name : Changing Apache to look at /var/www
-      lineinfile :
-        path : /etc/httpd/conf/httpd.conf
-        regexp : DocumentRoot "/var/www/html"
-        line : DocumentRoot "/var/www"
-    - name : Changing Apache to look at <Directory "/var/www/html">
-      lineinfile :
-        path : /etc/httpd/conf/httpd.conf
-        regexp : <Directory "/var/www/html">
-        line : <Directory "/var/www">
-    - name : Changing Apache to look at DirectoryIndex index.html index.html.var index.php
-      lineinfile :
-        path : /etc/httpd/conf/httpd.conf
-        regexp :     DirectoryIndex index.html
-        line : DirectoryIndex index.html index.html.var index.php
-    - name : Changing ownership
-      command : chown -R apache:apache /var/www/mediawiki-1.38.2
-    - name : Starting httpd
-      service :
-        name : httpd
-        state : restarted
-    - name : start firewall
-      command : systemctl start firewalld
-    - name: permit traffic for https service
-      firewalld:
-        service: https
-        permanent: yes
-        state: enabled
-    - name: permit traffic for http service
-      firewalld:
-        service: http
-        permanent: yes
-        state: enabled
-    - name : Restarting firewall
-      command : systemctl restart firewalld
-    - name : Enabling https
-      command : restorecon -FR /var/www/mediawiki-1.38.2/
-    - name : Enabling https
-      command : restorecon -FR /var/www/mediawiki
+        path: /var/www/html/mediawiki/config
+        state: directory
+        owner: apache
+        group: apache
+        mode: 0755
+
+    - name: Clean up temporary files
+      file:
+        path: /tmp/mediawiki.tar.gz
+        state: absent
+
+    - name: Set SELinux to allow httpd to connect to the network (if SELinux is enabled)
+      selinux:
+        policy: targeted
+        state: permissive
+        type: httpd_t
