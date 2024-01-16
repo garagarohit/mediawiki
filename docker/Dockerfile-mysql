@@ -1,14 +1,11 @@
-# Use the official MySQL 5.7 image from Docker Hub
-FROM mysql:5.7
+# Use the official MySQL 8.0 image from Docker Hub
+FROM mysql:8.0
 
 # Environment variables for MySQL configuration
 ENV MYSQL_ROOT_PASSWORD=root_password
 ENV MYSQL_DATABASE=my_database
 ENV MYSQL_USER=my_user
 ENV MYSQL_PASSWORD=my_password
-
-# Copy custom MySQL configuration file, if needed
-# COPY ./my.cnf /etc/mysql/my.cnf
 
 # Expose the MySQL port
 EXPOSE 3306
