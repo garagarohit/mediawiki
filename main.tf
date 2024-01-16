@@ -57,7 +57,7 @@ resource "aws_instance" "Mediawiki" {
     connection {
       type        = "ssh"
       user        = "ec2-user"
-      private_key = file("sai_devops.pem")  # Replace with the path to your private key
+      private_key = file("sai_devops.pem")
       host        = aws_instance.Mediawiki.public_ip
     }
   }
