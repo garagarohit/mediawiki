@@ -24,6 +24,7 @@ resource "aws_instance" "Mediawiki" {
   provisioner "remote-exec" {
     inline = [
       "sudo dnf module reset php",
+      "sudo module enable -y php",
       "sudo dnf install -y httpd php php-mysqlnd php-gd php-xml mariadb-server mariadb php-mbstring php-json mod_ssl php-intl php-apcu firewalld",
       "sudo yum install -y wget",
       "sudo systemctl enable mariadb",
@@ -33,12 +34,13 @@ resource "aws_instance" "Mediawiki" {
       "sudo mysql -u root -pwiki -e 'FLUSH PRIVILEGES;'",
       "sudo systemctl enable mariadb",
       "sudo systemctl enable httpd",
-      "cd home/ec2-user",
+      "mkdir -p home/ec2-user",
       "sudo wget https://releases.wikimedia.org/mediawiki/1.41/mediawiki-1.41.0.tar.gz",
       "sudo wget https://releases.wikimedia.org/mediawiki/1.41/mediawiki-1.41.0.tar.gz.sig",
       "gpg --verify mediawiki-1.41.0.tar.gz.sig mediawiki-1.41.0.tar.gz",
-      "sudo tar -zxvf mediawiki-1.41.0.tar.gz",
-      "cd /var/www",
+      "cd ../..",
+      "cd var/www",
+      "sudo tar -zxvf home/ec2-user/mediawiki-1.41.0.tar.gz",
       "sudo ln -s mediawiki-1.41.0/ mediawiki",
       "sudo chown -R apache:apache /var/www/mediawiki/",
       "sudo service httpd restart",
@@ -50,7 +52,6 @@ resource "aws_instance" "Mediawiki" {
       "getenforce",
       "sudo restorecon -FR /var/www/mediawiki-1.41.0/",
       "sudo restorecon -FR /var/www/mediawiki",
-      "ls -lZ /var/www/"
     ]
 
     connection {
